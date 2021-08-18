@@ -1,1 +1,4 @@
 *.xgmml
+output.gpml
+*.cys
+derby.log
