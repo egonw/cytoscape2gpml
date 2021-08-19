@@ -1,3 +1,6 @@
+@Grab(group='io.github.egonw.bacting', module='managers-cdk', version='0.0.22')
+@Grab(group='io.github.egonw.bacting', module='managers-inchi', version='0.0.22')
+
 import java.util.HashMap
 import java.util.zip.ZipFile
 import groovy.xml.XmlSlurper
@@ -16,6 +19,10 @@ if (options.help) { cli.usage(); System.exit(0) }
 if (options.f) cysFile = options.f
 if (options.s) cysFile = options.f
 
+def cdk = new net.bioclipse.managers.CDKManager(".");
+def inchi = new net.bioclipse.managers.InChIManager(".");
+
+// process the input .cys file
 def zipfile = new ZipFile(new File(cysFile))
 zipfile.entries().findAll { !it.directory }.each {
   if (it.name.endsWith(".xgmml")) xgmml = zipfile.getInputStream(it).text
@@ -32,6 +39,7 @@ nodesKEGGs = new HashMap()
 nodesCHEBIs = new HashMap()
 nodesPCIDs = new HashMap()
 nodesHMDBs = new HashMap()
+nodesSMILESs = new HashMap()
 nodeCVS.eachLine() { line ->
   lineCounter++
   if (lineCounter > skiplines) {
@@ -39,8 +47,10 @@ nodeCVS.eachLine() { line ->
     suid = cols[0].replace("\"","")
     label = cols[1].replace("\"","") // ABBREV
     shared4names = cols[15].replace("\"","") // shared4names
+    smiles = cols[16].replace("\"","") // SMILES
     nodesLabels.put(suid, label)
     nodesIDs.put(shared4names, suid)
+    nodesSMILESs.put(suid, smiles)
 
     // catch identifiers
     lmid = cols[11].replace("\"","") // LIPIDMAPS
@@ -103,16 +113,34 @@ builder.Pathway(xmlns:'http://pathvisio.org/GPML/2013a', Name:'Cytoscape Import'
     nodeLabel = ""  + node.@label
     nodeid = node.'@cy:nodeId'
     builder.DataNode(TextLabel:nodeLabel, GraphId:"dn"+nodeid) {
+      // additional annotation
+      inchikey = null
+      if (nodesSMILESs.containsKey("" + nodeid)) {
+        try {
+          smiles = nodesSMILESs.get("" + nodeid)
+          mol = cdk.fromSMILES(smiles)
+          anInChI = inchi.generate(mol)
+          inchikey = anInChI.getKey()
+          builder.Comment("SMILES: " + smiles) {}
+        } catch (Exception exception) {
+          builder.Comment("Problematic SMILES: " + smiles + "(" + exception.message + ")") {}
+        }
+      }
+
+      // the grahics
       x = width + (Double.parseDouble("" + node.graphics.@x[0]) - minx) * scaleFactor
       y = height + (Double.parseDouble("" + node.graphics.@y[0]) - miny) * scaleFactor
       nodesXs.put(""+nodeid, x)
       nodesYs.put(""+nodeid, y)
       Graphics(CenterX:x, CenterY:y, Width:width, Height:height) {}
+
+      // the Xref
       if (nodesLMIDs.containsKey("" + nodeid)) Xref(Database:'LIPID MAPS', ID:nodesLMIDs.get("" + nodeid)) {}
       else if (nodesKEGGs.containsKey("" + nodeid)) { Xref(Database:'KEGG Compound', ID:nodesKEGGs.get("" + nodeid)) {} }
       else if (nodesCHEBIs.containsKey("" + nodeid)) { Xref(Database:'ChEBI', ID:nodesKEGGs.get("" + nodeid)) {} }
       else if (nodesPCIDs.containsKey("" + nodeid)) { Xref(Database:'PubChem-compound', ID:nodesKEGGs.get("" + nodeid)) {} }
       else if (nodesHMDBs.containsKey("" + nodeid)) { Xref(Database:'HMDB', ID:nodesHMDBs.get("" + nodeid)) {} }
+      else if (inchikey != null) { Xref(Database:'InChIKey', inchikey) {} }
       else { Xref(Database:'', ID:'') {} }
     }
   }
