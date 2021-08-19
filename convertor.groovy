@@ -29,6 +29,9 @@ nodesLabels = new HashMap()
 nodesIDs = new HashMap()
 nodesLMIDs = new HashMap()
 nodesKEGGs = new HashMap()
+nodesCHEBIs = new HashMap()
+nodesPCIDs = new HashMap()
+nodesHMDBs = new HashMap()
 nodeCVS.eachLine() { line ->
   lineCounter++
   if (lineCounter > skiplines) {
@@ -36,12 +39,20 @@ nodeCVS.eachLine() { line ->
     suid = cols[0].replace("\"","")
     label = cols[1].replace("\"","") // ABBREV
     shared4names = cols[15].replace("\"","") // shared4names
-    keggid = cols[10].replace("\"","") // KEGG
-    lmid = cols[11].replace("\"","") // LIPIDMAPS
     nodesLabels.put(suid, label)
     nodesIDs.put(shared4names, suid)
+
+    // catch identifiers
+    lmid = cols[11].replace("\"","") // LIPIDMAPS
     if (lmid.length() > 0) nodesLMIDs.put(suid, lmid)
+    keggid = cols[10].replace("\"","") // KEGG
     if (keggid.length() > 0) nodesKEGGs.put(suid, keggid)
+    chebid = cols[3].replace("\"","") // ChEBI
+    if (chebid.length() > 0) nodesCHEBIs.put(suid, chebid)
+    pcid = cols[4].replace("\"","") // CID
+    if (pcid.length() > 0) nodesPCIDs.put(suid, pcid)
+    hmdb = cols[9].replace("\"","") // HMDB
+    if (hmdb.length() > 0) nodesHMDBs.put(suid, hmdb)
   }
 }
 
@@ -99,6 +110,9 @@ builder.Pathway(xmlns:'http://pathvisio.org/GPML/2013a', Name:'Cytoscape Import'
       Graphics(CenterX:x, CenterY:y, Width:width, Height:height) {}
       if (nodesLMIDs.containsKey("" + nodeid)) Xref(Database:'LIPID MAPS', ID:nodesLMIDs.get("" + nodeid)) {}
       else if (nodesKEGGs.containsKey("" + nodeid)) { Xref(Database:'KEGG Compound', ID:nodesKEGGs.get("" + nodeid)) {} }
+      else if (nodesCHEBIs.containsKey("" + nodeid)) { Xref(Database:'ChEBI', ID:nodesKEGGs.get("" + nodeid)) {} }
+      else if (nodesPCIDs.containsKey("" + nodeid)) { Xref(Database:'PubChem-compound', ID:nodesKEGGs.get("" + nodeid)) {} }
+      else if (nodesHMDBs.containsKey("" + nodeid)) { Xref(Database:'HMDB', ID:nodesHMDBs.get("" + nodeid)) {} }
       else { Xref(Database:'', ID:'') {} }
     }
   }
