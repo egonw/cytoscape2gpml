@@ -114,7 +114,7 @@ builder.Pathway(xmlns:'http://pathvisio.org/GPML/2013a', Name:'Cytoscape Import'
   graph.node.each { node ->
     nodeLabel = ""  + node.@label
     nodeid = node.'@cy:nodeId'
-    builder.DataNode(TextLabel:nodeLabel, GraphId:"dn"+nodeid) {
+    builder.DataNode(TextLabel:nodeLabel, GraphId:"dn"+nodeid, Type:(nodesSMILESs.containsKey("" + nodeid) ? "Metabolite" : "Unknown")) {
       // additional annotation
       inchikey = null
       if (nodesSMILESs.containsKey("" + nodeid)) {
@@ -134,7 +134,7 @@ builder.Pathway(xmlns:'http://pathvisio.org/GPML/2013a', Name:'Cytoscape Import'
       y = height + (Double.parseDouble("" + node.graphics.@y[0]) - miny) * scaleFactor
       nodesXs.put(""+nodeid, x)
       nodesYs.put(""+nodeid, y)
-      Graphics(CenterX:x, CenterY:y, Width:width, Height:height) {}
+      Graphics(CenterX:x, CenterY:y, Width:width, Height:height, Color:(nodesSMILESs.containsKey("" + nodeid) ? "0000ff" : "000000")) {}
 
       // the Xref
       if (nodesLMIDs.containsKey("" + nodeid)) Xref(Database:'LIPID MAPS', ID:nodesLMIDs.get("" + nodeid)) {}
