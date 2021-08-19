@@ -140,7 +140,7 @@ builder.Pathway(xmlns:'http://pathvisio.org/GPML/2013a', Name:'Cytoscape Import'
       else if (nodesCHEBIs.containsKey("" + nodeid)) { Xref(Database:'ChEBI', ID:nodesCHEBIs.get("" + nodeid)) {} }
       else if (nodesPCIDs.containsKey("" + nodeid)) { Xref(Database:'PubChem-compound', ID:nodesPCIDs.get("" + nodeid)) {} }
       else if (nodesHMDBs.containsKey("" + nodeid)) { Xref(Database:'HMDB', ID:nodesHMDBs.get("" + nodeid)) {} }
-      else if (inchikey != null) { Xref(Database:'InChIKey', inchikey) {} }
+      else if (inchikey != null) { Xref(Database:'InChIKey', ID:inchikey) {} }
       else { Xref(Database:'', ID:'') {} }
     }
   }
