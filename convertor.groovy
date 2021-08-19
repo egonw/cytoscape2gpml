@@ -109,6 +109,8 @@ builder.Pathway(xmlns:'http://pathvisio.org/GPML/2013a', Name:'Cytoscape Import'
   width = Double.parseDouble("" + graph.'**'.find { testNode -> testNode.@name[0] == 'NETWORK_WIDTH' }.@value[0]) / 20
   height = Double.parseDouble("" + graph.'**'.find { testNode -> testNode.@name[0] == 'NETWORK_HEIGHT' }.@value[0]) / 20
   Graphics(BoardWidth:''+((maxx-minx)*scaleFactor),  BoardHeight:''+((maxy-miny)*scaleFactor)) {}
+
+  // the DataNodes
   graph.node.each { node ->
     nodeLabel = ""  + node.@label
     nodeid = node.'@cy:nodeId'
@@ -144,14 +146,22 @@ builder.Pathway(xmlns:'http://pathvisio.org/GPML/2013a', Name:'Cytoscape Import'
       else { Xref(Database:'', ID:'') {} }
     }
   }
+
+  // the Interactions
   interactionStartNode.keySet().each() { suid ->
     builder.Interaction(GraphId:'id' + suid) {
+      // annotation
+      if (interactionComments.containsKey("" + suid)) Comment(interactionComments.get("" + suid)) {}
+
+      // the interaction graphics
       Graphics(ZOrder:"12288", LineThickness:"1.0") {
         startSuid = nodesIDs.get("" + interactionStartNode.get(suid))
         Point(X:nodesXs.get(""+startSuid), Y:nodesYs.get(""+startSuid), GraphRef:'dn' + startSuid) {}
         endSuid = nodesIDs.get("" + interactionEndNode.get(suid))
         Point(X:nodesXs.get(""+endSuid), Y:nodesYs.get(""+endSuid), GraphRef:'dn' + endSuid) {}
       }
+
+      // no identifiers at this moment
       Xref(Database:'', ID:'') {}
     }
   }
